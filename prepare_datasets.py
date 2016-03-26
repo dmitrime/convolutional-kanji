@@ -27,10 +27,13 @@ and create a pickle containing training, validation and test sets and their labe
 
     np.random.seed(RANDOM_SEED)
 
+    # list all pickle files
     pkls = [f for f in os.listdir(inputdir) if f.endswith('.pickle')
             and os.path.isfile(os.path.join(inputdir, f))]
     num_classes = len(pkls)
 
+    # we build our valid and test sets by taking a random fraction
+    # of examples from each class, everything else is for training
     train, valid, test = [], [], []
     train_lbl, valid_lbl, test_lbl = [], [], []
     label_map = dict()
@@ -56,10 +59,12 @@ and create a pickle containing training, validation and test sets and their labe
             train_lbl.extend([label]*(nexamples-vn-tn))
         print '{}: finished processing {} exmaples.'.format(path, nexamples)
 
+    # random shuffle the examples and labels in each set
     train, train_lbl = randomize(np.array(train), np.array(train_lbl))
     valid, valid_lbl = randomize(np.array(valid), np.array(valid_lbl))
     test, test_lbl = randomize(np.array(test), np.array(test_lbl))
 
+    # store all in a dict and pickle it
     data = {
         'train': train,
         'train_lbl': train_lbl,
