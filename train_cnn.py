@@ -9,7 +9,7 @@ BATCH_SIZE = 45
 KERNEL_SIZE = 5
 CHANNELS = 1
 DEPTH = 32
-HIDDEN_NUM = 64
+HIDDEN_NUM = 256
 EPOCHS = 5000
 
 
@@ -17,7 +17,7 @@ def train(datasets, params):
     train, train_lbl = datasets['train'], datasets['train_lbl']
     valid, valid_lbl = datasets['valid'], datasets['valid_lbl']
 
-    graph, x, y_, n_examples, preds, loss = params
+    graph, x, y_, preds, loss = params
 
     with tf.Session(graph=graph) as session:
         # create the optimizer to minimize the loss
@@ -33,14 +33,14 @@ def train(datasets, params):
             batch_data = train[offset:(offset+BATCH_SIZE), :, :, :]
             batch_labels = train_lbl[offset:(offset+BATCH_SIZE), :]
 
-            feed_dict={x: batch_data, y_: batch_labels, n_examples: BATCH_SIZE}
+            feed_dict={x: batch_data, y_: batch_labels}
             optimizer.run(feed_dict=feed_dict)
 
             if step % 10 == 0:
                 train_accuracy = accuracy.eval(feed_dict=feed_dict)
                 print("step %d, training accuracy %g" % (step, train_accuracy))
                 valid_accuracy = accuracy.eval(
-                    feed_dict={x: valid, y_: valid_lbl, n_examples: len(valid)})
+                    feed_dict={x: valid, y_: valid_lbl})
                 print("step %d, valid accuracy %g" % (step, valid_accuracy))
 
     print 'Done'
@@ -71,24 +71,27 @@ def build_model(size, nlabels):
         layer1_weights = weight([KERNEL_SIZE, KERNEL_SIZE, CHANNELS, DEPTH]) 
         layer1_biases = bias([DEPTH])
 
-        # convolve input with the first kernels
-        hidden = tf.nn.relu(conv2d(x, layer1_weights) + layer1_biases)
+        # convolve input with the first kernels and apply relu
+        h_conv1 = tf.nn.relu(conv2d(x, layer1_weights) + layer1_biases)
+        # max-pool
+        h_pool1 = max_pool(h_conv1)
 
         # create weights and biases for the 2nd conv layer
-        layer2_weights = weight([KERNEL_SIZE, KERNEL_SIZE, DEPTH, DEPTH])
-        layer2_biases = bias([DEPTH])
+        layer2_weights = weight([KERNEL_SIZE, KERNEL_SIZE, DEPTH, DEPTH*2])
+        layer2_biases = bias([DEPTH*2])
 
-        # convolve first hidden layer output with the second kernels
-        hidden = tf.nn.relu(conv2d(hidden, layer2_weights) + layer2_biases)
+        # convolve first hidden layer output with the second kernels and apply relu
+        h_conv2 = tf.nn.relu(conv2d(h_pool1, layer2_weights) + layer2_biases)
+        # max-pool
+        h_pool2 = max_pool(h_conv2)
 
         # create weights and biases for the 3rd hidden layer
-        layer3_weights = weight([size * size * DEPTH, HIDDEN_NUM])
+        layer3_weights = weight([size*size // 16 * DEPTH * 2, HIDDEN_NUM])
         layer3_biases = bias([HIDDEN_NUM])
 
         # fully connect the 2nd layer output to 3rd input
-        shape = hidden.get_shape().as_list()
-        n_examples = tf.placeholder(tf.int32)
-        reshape = tf.reshape(hidden, tf.pack([n_examples, -1]))
+        dim = h_pool2.get_shape().as_list()
+        reshape = tf.reshape(h_pool2, [-1, dim[1]*dim[2]*dim[3]])
         hidden = tf.nn.relu(tf.matmul(reshape, layer3_weights) + layer3_biases)
 
         # create weights and biases for the output layer
@@ -103,7 +106,7 @@ def build_model(size, nlabels):
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, y_))
 
 
-        return (graph, x, y_, n_examples, predictions, loss)
+        return (graph, x, y_, predictions, loss)
 
 
 if __name__ == '__main__':
