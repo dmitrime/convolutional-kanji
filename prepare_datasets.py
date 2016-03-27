@@ -8,11 +8,15 @@ import numpy as np
 VALID_PERCENT = 0.05
 TEST_PERCENT = 0.05
 RANDOM_SEED = 807
+OUTPUT_DATA = 'datasets.pickle'
 
 
 def reshape(data, lbl, nlabels):
     n = data[0].shape[0]
-    data = data.reshape((-1, n*n)).astype(np.float32)
+    # reshape to add a single (grayscale) channel,
+    # because tf.nn.conv2d() expects 4-D input.
+    data = data.reshape((-1, n, n, 1)).astype(np.float32)
+    # 1-hot encoding for the labels
     lbl = (np.arange(nlabels) == lbl[:, None]).astype(np.float32)
     return data, lbl
 
@@ -37,7 +41,6 @@ and create a pickle containing training, validation and test sets and their labe
     # list all pickle files
     pkls = [f for f in os.listdir(inputdir) if f.endswith('.pickle')
             and os.path.isfile(os.path.join(inputdir, f))]
-    num_classes = len(pkls)
 
     # we build our valid and test sets by taking a random fraction
     # of examples from each class, everything else is for training
@@ -71,7 +74,7 @@ and create a pickle containing training, validation and test sets and their labe
     valid, valid_lbl = randomize(np.array(valid), np.array(valid_lbl))
     test, test_lbl = randomize(np.array(test), np.array(test_lbl))
 
-    # reshape the examples into 1D arrays and labels into 1-hot encodings
+    # reshape the examples into 4-D arrays and labels into 1-hot encodings
     nlabels = len(label_map)
     train, train_lbl = reshape(train, train_lbl, nlabels)
     valid, valid_lbl = reshape(valid, valid_lbl, nlabels)
@@ -89,7 +92,7 @@ and create a pickle containing training, validation and test sets and their labe
     }
 
     try:
-        with open('datasets.pickle', 'wb') as f:
+        with open(OUTPUT_DATA, 'wb') as f:
             pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
     except:
         print 'Failed to write pickled datasets...'
