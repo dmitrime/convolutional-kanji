@@ -5,9 +5,10 @@ import pickle
 import numpy as np
 from time import time
 from scipy import ndimage
-from scipy.misc import imresize, toimage
+from scipy.misc import imresize
 
 IMG_SIZE = 32
+
 
 def save_pickle(data, name, od):
     """ Save all the resized images into one pickle file. """
@@ -17,7 +18,7 @@ def save_pickle(data, name, od):
             pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
     except:
         print 'Failed to write data into {}'.format(picklename)
-        
+
 
 def read_resize_image(img):
     """ Read the image, resize it and return a numpy matrix of new size. """
@@ -25,6 +26,7 @@ def read_resize_image(img):
         return imresize(ndimage.imread(img), (IMG_SIZE, IMG_SIZE))
     except IOError:
         print 'File {} not readable, skipping.'.format(img)
+
 
 def ensure_ouputdir(od):
     """ Create the output dir if it does not already exist. """
@@ -72,5 +74,3 @@ one pickle file per subdir, in subdir-name.pkl format.""".format(IMG_SIZE)
             path, len(data), data[0].shape, end-start)
 
         save_pickle(data, d, outputdir)
-
-

@@ -3,12 +3,19 @@ import sys
 import os
 import pickle
 import numpy as np
-from time import time
 
 # Validation and Test set fraction out of total number of examples.
 VALID_PERCENT = 0.05
 TEST_PERCENT = 0.05
 RANDOM_SEED = 807
+
+
+def reshape(data, lbl, nlabels):
+    n = data[0].shape[0]
+    data = data.reshape((-1, n*n)).astype(np.float32)
+    lbl = (np.arange(nlabels) == lbl[:, None]).astype(np.float32)
+    return data, lbl
+
 
 def randomize(data, lbl):
     ps = np.random.permutation(len(data))
@@ -63,6 +70,12 @@ and create a pickle containing training, validation and test sets and their labe
     train, train_lbl = randomize(np.array(train), np.array(train_lbl))
     valid, valid_lbl = randomize(np.array(valid), np.array(valid_lbl))
     test, test_lbl = randomize(np.array(test), np.array(test_lbl))
+
+    # reshape the examples into 1D arrays and labels into 1-hot encodings
+    nlabels = len(label_map)
+    train, train_lbl = reshape(train, train_lbl, nlabels)
+    valid, valid_lbl = reshape(valid, valid_lbl, nlabels)
+    test, test_lbl = reshape(test, test_lbl, nlabels)
 
     # store all in a dict and pickle it
     data = {
