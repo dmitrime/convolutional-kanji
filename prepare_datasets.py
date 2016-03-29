@@ -59,8 +59,7 @@ If nclasses param is given, limit the dataset to N classes."""
     train, valid, test = [], [], []
     train_lbl, valid_lbl, test_lbl = [], [], []
     label_map = dict()
-    for idx, pkl in enumerate(pkls):
-        label = idx + 1
+    for label, pkl in enumerate(pkls):
         label_map[label] = os.path.splitext(pkl)[0]
         path = os.path.join(inputdir, pkl)
         with open(path, 'rb') as f:
@@ -81,7 +80,7 @@ If nclasses param is given, limit the dataset to N classes."""
             train_lbl.extend([label]*(nexamples-vn-tn))
         print '{}: finished processing {} exmaples.'.format(path, nexamples)
 
-        if nclasses is not None and label == nclasses:
+        if nclasses is not None and label+1 == nclasses:
             break
 
     # random shuffle the examples and labels in each set
