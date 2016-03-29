@@ -16,6 +16,7 @@ def train(datasets, params):
     graph, x, y_, preds, loss = params
 
     with tf.Session(graph=graph) as session:
+        saver = tf.train.Saver()
         # create the optimizer to minimize the loss
         optimizer = tf.train.AdamOptimizer(1e-4).minimize(loss)
 
@@ -37,12 +38,13 @@ def train(datasets, params):
                 #print 'Predictions:\n', preds.eval(feed_dict=feed_dict)
                 #print 'Correct pred:\n', correct_prediction.eval(feed_dict=feed_dict)
 
-                if step % 50 == 0:
+                if step == 0 or step == int(nbatches / 2):
                     train_accuracy = accuracy.eval(feed_dict=feed_dict)
                     print("epoch %d, step %d, training accuracy %g" % (epoch+1, step, train_accuracy))
                     valid_accuracy = accuracy.eval(
                         feed_dict={x: valid[:250], y_: valid_lbl[:250]})
                     print("epoch %d, step %d, valid accuracy %g" % (epoch+1, step, valid_accuracy))
+                    saver.save(session, 'models/model_e{}_s{}.tf'.format(epoch, step))
 
     print 'Done'
 
@@ -70,7 +72,7 @@ def build_model(size, nlabels):
 
         # create weights and biases for the 1st conv layer
         l1_maps = 32
-        l1_kernel = 11
+        l1_kernel = 5
         l1_weights = weight([l1_kernel, l1_kernel, 1, l1_maps]) 
         l1_biases = bias([l1_maps])
 
@@ -81,7 +83,7 @@ def build_model(size, nlabels):
 
         # create weights and biases for the 2nd conv layer
         l2_maps = 64
-        l2_kernel = 7
+        l2_kernel = 5
         l2_weights = weight([l2_kernel, l2_kernel, l1_maps, l2_maps])
         l2_biases = bias([l2_maps])
 
@@ -105,7 +107,7 @@ def build_model(size, nlabels):
 
         # create weights and biases for the 3rd hidden layer
         hidden_num = 256
-        l4_weights = weight([16 * l3_maps, hidden_num])
+        l4_weights = weight([size*size*2, hidden_num])
         l4_biases = bias([hidden_num])
 
         # fully connect the 2nd layer output to 3rd input
