@@ -83,6 +83,12 @@ If nclasses param is given, limit the dataset to N classes."""
         if nclasses is not None and label+1 == nclasses:
             break
 
+    # subtract mean image
+    mean_image = np.mean(train, axis=0)
+    train = train - mean_image
+    valid = valid - mean_image
+    test = test - mean_image
+
     # random shuffle the examples and labels in each set
     train, train_lbl = randomize(np.array(train), np.array(train_lbl))
     valid, valid_lbl = randomize(np.array(valid), np.array(valid_lbl))
