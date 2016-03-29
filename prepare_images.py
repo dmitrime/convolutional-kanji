@@ -8,7 +8,12 @@ from scipy import ndimage
 from scipy.misc import imresize
 
 IMG_SIZE = 32
+MARGIN_SIZE = 4
 
+
+def add_margins(img):
+    """ Add N-pixel white margins to each image. """
+    return np.pad(img, MARGIN_SIZE, 'constant', constant_values=255)
 
 def save_pickle(data, name, od):
     """ Save all the resized images into one pickle file. """
@@ -39,8 +44,9 @@ if __name__ == '__main__':
         print """
 Lists images in all subdirs of the input dir,\n\
 resizes them to a square of given size (default: {}),\n\
-then pickles the resized numpy matrices and writes them to output dir,\n\
-one pickle file per subdir, in subdir-name.pkl format.""".format(IMG_SIZE)
+then pickles the resized numpy matrices, add white margins\n\
+and writes them to output dir, one pickle file per subdir, in subdir-name.pkl format.\n\
+Resolution of each image will be (size+margin, size+margin). """.format(IMG_SIZE)
         sys.exit(1)
 
     inputdir, outputdir = sys.argv[1], sys.argv[2]
@@ -64,10 +70,13 @@ one pickle file per subdir, in subdir-name.pkl format.""".format(IMG_SIZE)
             continue
 
         pngs = [fn for fn in os.listdir(path) if fn.endswith('.png')]
-        data = np.ndarray(shape=(len(pngs), IMG_SIZE, IMG_SIZE))
+        data = np.ndarray(shape=(len(pngs),
+                          IMG_SIZE+2*MARGIN_SIZE,
+                          IMG_SIZE+2*MARGIN_SIZE))
         start = time()
         for idx, png in enumerate(pngs):
-            data[idx, :, :] = read_resize_image(os.path.join(path, png))
+            resized = read_resize_image(os.path.join(path, png))
+            data[idx, :, :] = add_margins(resized)
         end = time()
 
         print '{}: {} images read and resized to {} in {:.3f}s. Saving...'.format(
