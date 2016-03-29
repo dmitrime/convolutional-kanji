@@ -85,14 +85,14 @@ If nclasses param is given, limit the dataset to N classes."""
 
     # subtract mean image
     mean_image = np.mean(train, axis=0)
-    train = train - mean_image
-    valid = valid - mean_image
-    test = test - mean_image
+    train = np.array(train) - mean_image
+    valid = np.array(valid) - mean_image
+    test = np.array(test) - mean_image
 
     # random shuffle the examples and labels in each set
-    train, train_lbl = randomize(np.array(train), np.array(train_lbl))
-    valid, valid_lbl = randomize(np.array(valid), np.array(valid_lbl))
-    test, test_lbl = randomize(np.array(test), np.array(test_lbl))
+    train, train_lbl = randomize(train, np.array(train_lbl))
+    valid, valid_lbl = randomize(valid, np.array(valid_lbl))
+    test, test_lbl = randomize(test, np.array(test_lbl))
 
     # reshape the examples into 4-D arrays and labels into 1-hot encodings
     nlabels = len(label_map)
