@@ -5,8 +5,8 @@ import pickle
 import numpy as np
 import tensorflow as tf
 
-BATCH_SIZE = 45
-EPOCHS = 5000
+BATCH_SIZE = 100
+EPOCHS = 20
 
 
 def train(datasets, params):
@@ -17,27 +17,32 @@ def train(datasets, params):
 
     with tf.Session(graph=graph) as session:
         # create the optimizer to minimize the loss
-        #optimizer = tf.train.GradientDescentOptimizer(0.005).minimize(loss)
         optimizer = tf.train.AdamOptimizer(1e-4).minimize(loss)
 
         correct_prediction = tf.equal(tf.argmax(preds, 1), tf.argmax(y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         session.run(tf.initialize_all_variables())
-        for step in range(EPOCHS):
-            offset = (step * BATCH_SIZE) % (train_lbl.shape[0] - BATCH_SIZE)
-            batch_data = train[offset:(offset+BATCH_SIZE), :, :, :]
-            batch_labels = train_lbl[offset:(offset+BATCH_SIZE), :]
 
-            feed_dict={x: batch_data, y_: batch_labels}
-            optimizer.run(feed_dict=feed_dict)
+        nbatches = train_lbl.shape[0] / BATCH_SIZE
+        for epoch in range(EPOCHS):
+            for step in range(nbatches):
+                batch_data = train[step*BATCH_SIZE:(step+1)*BATCH_SIZE, :, :, :]
+                batch_labels = train_lbl[step*BATCH_SIZE:(step+1)*BATCH_SIZE, :]
 
-            if step % 10 == 0:
-                train_accuracy = accuracy.eval(feed_dict=feed_dict)
-                print("step %d, training accuracy %g" % (step, train_accuracy))
-                valid_accuracy = accuracy.eval(
-                    feed_dict={x: valid, y_: valid_lbl})
-                print("step %d, valid accuracy %g" % (step, valid_accuracy))
+                feed_dict={x: batch_data, y_: batch_labels}
+                optimizer.run(feed_dict=feed_dict)
+
+                #print 'Batch labels:\n', batch_labels
+                #print 'Predictions:\n', preds.eval(feed_dict=feed_dict)
+                #print 'Correct pred:\n', correct_prediction.eval(feed_dict=feed_dict)
+
+                if step % 50 == 0:
+                    train_accuracy = accuracy.eval(feed_dict=feed_dict)
+                    print("epoch %d, step %d, training accuracy %g" % (epoch+1, step, train_accuracy))
+                    valid_accuracy = accuracy.eval(
+                        feed_dict={x: valid[:250], y_: valid_lbl[:250]})
+                    print("epoch %d, step %d, valid accuracy %g" % (epoch+1, step, valid_accuracy))
 
     print 'Done'
 
@@ -64,8 +69,8 @@ def build_model(size, nlabels):
         y_ = tf.placeholder(tf.float32, shape=(None, nlabels))
 
         # create weights and biases for the 1st conv layer
-        l1_maps = 64
-        l1_kernel = 5
+        l1_maps = 32
+        l1_kernel = 11
         l1_weights = weight([l1_kernel, l1_kernel, 1, l1_maps]) 
         l1_biases = bias([l1_maps])
 
@@ -75,8 +80,8 @@ def build_model(size, nlabels):
         h_pool1 = max_pool(h_conv1)
 
         # create weights and biases for the 2nd conv layer
-        l2_maps = 128
-        l2_kernel = 5
+        l2_maps = 64
+        l2_kernel = 7
         l2_weights = weight([l2_kernel, l2_kernel, l1_maps, l2_maps])
         l2_biases = bias([l2_maps])
 
@@ -87,7 +92,7 @@ def build_model(size, nlabels):
 
 
         # create weights and biases for the 2nd conv layer
-        l3_maps = 256
+        l3_maps = 128
         l3_kernel = 5
         l3_weights = weight([l3_kernel, l3_kernel, l2_maps, l3_maps])
         l3_biases = bias([l3_maps])
