@@ -5,10 +5,9 @@ import pickle
 import numpy as np
 
 # Validation and Test set fraction out of total number of examples.
-VALID_PERCENT = 0.05
-TEST_PERCENT = 0.05
+VALID_PER_CLASS = 20
+TEST_PER_CLASS = 20
 RANDOM_SEED = 807
-OUTPUT_DATA = 'datasets.pickle'
 
 
 def reshape(data, lbl, nlabels):
@@ -28,13 +27,26 @@ def randomize(data, lbl):
     return data, lbl
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print "Usage: python {} input-dir".format(sys.argv[0])
+    if len(sys.argv) < 3:
+        print "Usage: python {} input-dir output.pickle [nclasses]".format(sys.argv[0])
         print """
 Load pickle files from input dir, random shuffle examples,\n\
-and create a pickle containing training, validation and test sets and their labels."""
+and create a pickle containing training, validation and test sets and their labels.
+If nclasses param is given, limit the dataset to N classes."""
         sys.exit(1)
+
+    nclasses = None
+    if len(sys.argv) == 4:
+        try:
+            n = int(sys.argv[3])
+            if n <= 1 or n > 100:
+                raise ValueError
+            nclasses = n
+        except:
+            print 'Number of classes is between 2 and 100'
+            sys.exit(1)
     inputdir = sys.argv[1]
+    outfile = sys.argv[2]
 
     np.random.seed(RANDOM_SEED)
 
@@ -57,17 +69,20 @@ and create a pickle containing training, validation and test sets and their labe
             np.random.shuffle(class_data)
             nexamples = len(class_data)
 
-            vn = int(VALID_PERCENT*nexamples)
+            vn = VALID_PER_CLASS
             valid.extend(class_data[:vn])
             valid_lbl.extend([label]*vn)
 
-            tn = int(TEST_PERCENT*nexamples)
+            tn = TEST_PER_CLASS
             test.extend(class_data[vn:vn+tn])
             test_lbl.extend([label]*tn)
 
             train.extend(class_data[vn+tn:])
             train_lbl.extend([label]*(nexamples-vn-tn))
         print '{}: finished processing {} exmaples.'.format(path, nexamples)
+
+        if nclasses is not None and label == nclasses:
+            break
 
     # random shuffle the examples and labels in each set
     train, train_lbl = randomize(np.array(train), np.array(train_lbl))
@@ -92,7 +107,7 @@ and create a pickle containing training, validation and test sets and their labe
     }
 
     try:
-        with open(OUTPUT_DATA, 'wb') as f:
+        with open(outfile, 'wb') as f:
             pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
     except:
         print 'Failed to write pickled datasets...'
