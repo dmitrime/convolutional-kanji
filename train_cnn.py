@@ -1,8 +1,6 @@
 # -*- coding: UTF-8 -*-
 import sys
-import os
 import pickle
-import numpy as np
 import tensorflow as tf
 
 BATCH_SIZE = 100
@@ -31,7 +29,7 @@ def train(datasets, params):
                 batch_data = train[step*BATCH_SIZE:(step+1)*BATCH_SIZE, :, :, :]
                 batch_labels = train_lbl[step*BATCH_SIZE:(step+1)*BATCH_SIZE, :]
 
-                feed_dict={x: batch_data, y_: batch_labels, keep: 0.8}
+                feed_dict = {x: batch_data, y_: batch_labels, keep: 0.8}
                 optimizer.run(feed_dict=feed_dict)
 
                 #print 'Batch labels:\n', batch_labels
@@ -51,8 +49,6 @@ def train(datasets, params):
                     # save the model
                     saver.save(session,
                                'models/cnn{}_e{}_s{}.tf'.format(valid[0].shape[0], epoch+1, step))
-
-    print 'Done'
 
 
 def build_model(size, nlabels):
@@ -80,7 +76,7 @@ def build_model(size, nlabels):
         # create weights and biases for the 1st conv layer
         l1_maps = 12
         l1_kernel = 5
-        l1_weights = weight([l1_kernel, l1_kernel, 1, l1_maps]) 
+        l1_weights = weight([l1_kernel, l1_kernel, 1, l1_maps])
         l1_biases = bias([l1_maps])
 
         # convolve input with the first kernels and apply relu
@@ -89,7 +85,6 @@ def build_model(size, nlabels):
         h_pool1 = max_pool(h_conv1)
         # apply dropout
         #h_pool1 = tf.nn.dropout(h_pool1, keep)
-
 
         # create weights and biases for the 2nd conv layer
         l2_maps = 24
@@ -104,7 +99,6 @@ def build_model(size, nlabels):
         # apply dropout
         #h_pool2 = tf.nn.dropout(h_pool2, keep)
 
-
         # create weights and biases for the 2nd conv layer
         l3_maps = 48
         l3_kernel = 5
@@ -117,7 +111,6 @@ def build_model(size, nlabels):
         h_pool3 = max_pool(h_conv3)
         # apply dropout
         #h_pool3 = tf.nn.dropout(h_pool3, keep)
-
 
         # create weights and biases for the 3rd hidden layer
         dim = h_pool3.get_shape().as_list()
@@ -142,7 +135,6 @@ def build_model(size, nlabels):
 
         # cross-entropy as the loss
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, y_))
-
 
         return (graph, x, y_, keep, predictions, loss)
 
