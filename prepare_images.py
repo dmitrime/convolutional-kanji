@@ -1,42 +1,14 @@
 # -*- coding: UTF-8 -*-
 import sys
 import os
-import pickle
 import numpy as np
 from time import time
-from scipy import ndimage
-from scipy.misc import imresize
+
+import utils
 
 IMG_SIZE = 32
 MARGIN_SIZE = 4
 
-
-def add_margins(img):
-    """ Add N-pixel white margins to each image. """
-    return np.pad(img, MARGIN_SIZE, 'constant', constant_values=255)
-
-def save_pickle(data, name, od):
-    """ Save all the resized images into one pickle file. """
-    picklename = os.path.join(od, name + '.pickle')
-    try:
-        with open(picklename, 'wb') as f:
-            pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
-    except:
-        print 'Failed to write data into {}'.format(picklename)
-
-
-def read_resize_image(img):
-    """ Read the image, resize it and return a numpy matrix of new size. """
-    try:
-        return imresize(ndimage.imread(img), (IMG_SIZE, IMG_SIZE))
-    except IOError:
-        print 'File {} not readable, skipping.'.format(img)
-
-
-def ensure_ouputdir(od):
-    """ Create the output dir if it does not already exist. """
-    if not os.path.isdir(od):
-        os.mkdir(od)
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
@@ -62,7 +34,7 @@ Resolution of each image will be (size+margin, size+margin). """.format(IMG_SIZE
             print 'size must be an integer!'
             sys.exit(1)
 
-    ensure_ouputdir(outputdir)
+    utils.ensure_ouputdir(outputdir)
 
     for d in os.listdir(inputdir):
         path = os.path.join(inputdir, d)
@@ -75,11 +47,11 @@ Resolution of each image will be (size+margin, size+margin). """.format(IMG_SIZE
                           IMG_SIZE+2*MARGIN_SIZE))
         start = time()
         for idx, png in enumerate(pngs):
-            resized = read_resize_image(os.path.join(path, png))
-            data[idx, :, :] = add_margins(resized)
+            resized = utils.read_resize_image(os.path.join(path, png), IMG_SIZE)
+            data[idx, :, :] = utils.add_margins(resized, MARGIN_SIZE)
         end = time()
 
         print '{}: {} images read and resized to {} in {:.3f}s. Saving...'.format(
             path, len(data), data[0].shape, end-start)
 
-        save_pickle(data, d, outputdir)
+        utils.save_pickle(data, d, outputdir)
