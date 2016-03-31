@@ -7,18 +7,29 @@ BATCH_SIZE = 100
 EPOCHS = 20
 
 
-def train(datasets, params):
+def train(datasets):
     train, train_lbl = datasets['train'], datasets['train_lbl']
     valid, valid_lbl = datasets['valid'], datasets['valid_lbl']
 
-    graph, x, y_, keep, preds, loss = params
+    size = train[0].shape[0]
+    nlabels = train_lbl.shape[1]
 
-    with tf.Session(graph=graph) as session:
-        saver = tf.train.Saver()
-        # create the optimizer to minimize the loss
-        optimizer = tf.train.AdamOptimizer(0.005).minimize(loss)
+    # placeholders for input, None means batch of any size
+    x = tf.placeholder(tf.float32, shape=(None, size, size, 1))
+    y_ = tf.placeholder(tf.float32, shape=(None, nlabels))
+    keep = tf.placeholder(tf.float32)
 
-        correct_prediction = tf.equal(tf.argmax(preds, 1), tf.argmax(y_, 1))
+    logits = build_model(x, nlabels, keep)
+    # predict from logits using softmax
+    predictions = tf.nn.softmax(logits)
+    # cross-entropy as the loss
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, y_))
+    # create the optimizer to minimize the loss
+    optimizer = tf.train.AdamOptimizer(0.005).minimize(loss)
+
+    saver = tf.train.Saver()
+    with tf.Session() as session:
+        correct_prediction = tf.equal(tf.argmax(predictions, 1), tf.argmax(y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         session.run(tf.initialize_all_variables())
@@ -50,7 +61,7 @@ def train(datasets, params):
                                'models/cnn{}_e{}_s{}.tf'.format(valid[0].shape[0], epoch+1, step))
 
 
-def build_model(size, nlabels):
+def build_model(X, nlabels, keep):
 
     def weight(shape):
         return tf.Variable(tf.truncated_normal(shape, stddev=0.1))
@@ -65,77 +76,63 @@ def build_model(size, nlabels):
         return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                               strides=[1, 2, 2, 1], padding='SAME')
 
-    graph = tf.Graph()
-    with graph.as_default():
-        # placeholders for input, None means batch of any size
-        x = tf.placeholder(tf.float32, shape=(None, size, size, 1))
-        y_ = tf.placeholder(tf.float32, shape=(None, nlabels))
-        keep = tf.placeholder(tf.float32)
+    # create weights and biases for the 1st conv layer
+    l1_maps = 64
+    l1_kernel = 3
+    l1_weights = weight([l1_kernel, l1_kernel, 1, l1_maps])
+    l1_biases = bias([l1_maps])
 
-        # create weights and biases for the 1st conv layer
-        l1_maps = 32
-        l1_kernel = 3
-        l1_weights = weight([l1_kernel, l1_kernel, 1, l1_maps])
-        l1_biases = bias([l1_maps])
+    # convolve input with the first kernels and apply relu
+    h_conv1 = tf.nn.relu(conv2d(X, l1_weights) + l1_biases)
+    # max-pool
+    h_pool1 = max_pool(h_conv1)
+    # apply dropout
+    #h_pool1 = tf.nn.dropout(h_pool1, keep)
 
-        # convolve input with the first kernels and apply relu
-        h_conv1 = tf.nn.relu(conv2d(x, l1_weights) + l1_biases)
-        # max-pool
-        h_pool1 = max_pool(h_conv1)
-        # apply dropout
-        #h_pool1 = tf.nn.dropout(h_pool1, keep)
+    # create weights and biases for the 2nd conv layer
+    l2_maps = 128
+    l2_kernel = 3
+    l2_weights = weight([l2_kernel, l2_kernel, l1_maps, l2_maps])
+    l2_biases = bias([l2_maps])
 
-        # create weights and biases for the 2nd conv layer
-        l2_maps = 64
-        l2_kernel = 3
-        l2_weights = weight([l2_kernel, l2_kernel, l1_maps, l2_maps])
-        l2_biases = bias([l2_maps])
+    # convolve first hidden layer output with the second kernels and apply relu
+    h_conv2 = tf.nn.relu(conv2d(h_pool1, l2_weights) + l2_biases)
+    # max-pool
+    h_pool2 = max_pool(h_conv2)
+    # apply dropout
+    #h_pool2 = tf.nn.dropout(h_pool2, keep)
 
-        # convolve first hidden layer output with the second kernels and apply relu
-        h_conv2 = tf.nn.relu(conv2d(h_pool1, l2_weights) + l2_biases)
-        # max-pool
-        h_pool2 = max_pool(h_conv2)
-        # apply dropout
-        #h_pool2 = tf.nn.dropout(h_pool2, keep)
+    # create weights and biases for the 2nd conv layer
+    l3_maps = 256
+    l3_kernel = 3
+    l3_weights = weight([l3_kernel, l3_kernel, l2_maps, l3_maps])
+    l3_biases = bias([l3_maps])
 
-        # create weights and biases for the 2nd conv layer
-        l3_maps = 128
-        l3_kernel = 3
-        l3_weights = weight([l3_kernel, l3_kernel, l2_maps, l3_maps])
-        l3_biases = bias([l3_maps])
+    # convolve first hidden layer output with the second kernels and apply relu
+    h_conv3 = tf.nn.relu(conv2d(h_pool2, l3_weights) + l3_biases)
+    # max-pool
+    h_pool3 = max_pool(h_conv3)
+    # apply dropout
+    #h_pool3 = tf.nn.dropout(h_pool3, keep)
 
-        # convolve first hidden layer output with the second kernels and apply relu
-        h_conv3 = tf.nn.relu(conv2d(h_pool2, l3_weights) + l3_biases)
-        # max-pool
-        h_pool3 = max_pool(h_conv3)
-        # apply dropout
-        #h_pool3 = tf.nn.dropout(h_pool3, keep)
+    # create weights and biases for the 3rd hidden layer
+    hidden_num = 1024
+    dim = h_pool3.get_shape().as_list()
+    l4_weights = weight([dim[1]*dim[2]*dim[3], hidden_num])
+    l4_biases = bias([hidden_num])
 
-        # create weights and biases for the 3rd hidden layer
-        hidden_num = 512
-        dim = h_pool3.get_shape().as_list()
-        l4_weights = weight([dim[1]*dim[2]*dim[3], hidden_num])
-        l4_biases = bias([hidden_num])
+    # fully connect the 2nd layer output to 3rd input
+    dim = h_pool3.get_shape().as_list()
+    reshape = tf.reshape(h_pool3, [-1, dim[1]*dim[2]*dim[3]])
+    hidden = tf.nn.relu(tf.matmul(reshape, l4_weights) + l4_biases)
+    # apply dropout
+    hidden = tf.nn.dropout(hidden, keep)
 
-        # fully connect the 2nd layer output to 3rd input
-        dim = h_pool3.get_shape().as_list()
-        reshape = tf.reshape(h_pool3, [-1, dim[1]*dim[2]*dim[3]])
-        hidden = tf.nn.relu(tf.matmul(reshape, l4_weights) + l4_biases)
-        # apply dropout
-        hidden = tf.nn.dropout(hidden, keep)
+    # create weights and biases for the output layer
+    l5_weights = weight([hidden_num, nlabels])
+    l5_biases = bias([nlabels])
 
-        # create weights and biases for the output layer
-        l5_weights = weight([hidden_num, nlabels])
-        l5_biases = bias([nlabels])
-
-        # predict from logits using softmax
-        logits = tf.matmul(hidden, l5_weights) + l5_biases
-        predictions = tf.nn.softmax(logits)
-
-        # cross-entropy as the loss
-        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, y_))
-
-        return (graph, x, y_, keep, predictions, loss)
+    return tf.matmul(hidden, l5_weights) + l5_biases
 
 
 if __name__ == '__main__':
@@ -161,6 +158,4 @@ then pickle and save it."""
     if sx != sy:
         raise ValueError('Input train data not a square')
 
-    nlabels = len(datasets['label_map'])
-    model_params = build_model(sx, nlabels)
-    train(datasets, model_params)
+    train(datasets)
