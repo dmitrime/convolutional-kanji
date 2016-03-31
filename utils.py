@@ -11,9 +11,9 @@ def add_margins(img, margin_size):
     return np.pad(img, margin_size, 'constant', constant_values=255)
 
 
-def save_pickle(data, name, od):
+def save_pickle(data, name, od="."):
     """ Save all the resized images into one pickle file. """
-    picklename = os.path.join(od, name + '.pickle')
+    picklename = os.path.join(od, name)
     try:
         with open(picklename, 'wb') as f:
             pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
