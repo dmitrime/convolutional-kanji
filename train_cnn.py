@@ -15,11 +15,11 @@ def train(datasets):
     nlabels = train_lbl.shape[1]
 
     # placeholders for input, None means batch of any size
-    x = tf.placeholder(tf.float32, shape=(None, size, size, 1))
-    y_ = tf.placeholder(tf.float32, shape=(None, nlabels))
+    X = tf.placeholder(tf.float32, shape=(None, size, size, 1), name="X")
+    y_ = tf.placeholder(tf.float32, shape=(None, nlabels), name="y_")
     keep = tf.placeholder(tf.float32)
 
-    logits = build_model(x, nlabels, keep)
+    logits = build_model(X, nlabels, keep)
     # predict from logits using softmax
     predictions = tf.nn.softmax(logits)
     # cross-entropy as the loss
@@ -40,7 +40,7 @@ def train(datasets):
                 batch_data = train[step*BATCH_SIZE:(step+1)*BATCH_SIZE, :, :, :]
                 batch_labels = train_lbl[step*BATCH_SIZE:(step+1)*BATCH_SIZE, :]
 
-                feed_dict = {x: batch_data, y_: batch_labels, keep: 0.5}
+                feed_dict = {X: batch_data, y_: batch_labels, keep: 0.5}
                 optimizer.run(feed_dict=feed_dict)
 
                 #print 'Batch labels:\n', batch_labels
@@ -49,11 +49,11 @@ def train(datasets):
 
                 if step % int(nbatches / 4) == 0:
                     train_accuracy = accuracy.eval(
-                        feed_dict={x: batch_data, y_: batch_labels, keep: 1.0})
+                        feed_dict={X: batch_data, y_: batch_labels, keep: 1.0})
                     print("epoch %d, step %d, training accuracy %g" % (epoch+1, step, train_accuracy))
 
                     valid_accuracy = accuracy.eval(
-                        feed_dict={x: valid, y_: valid_lbl, keep: 1.0})
+                        feed_dict={X: valid, y_: valid_lbl, keep: 1.0})
                     print("epoch %d, step %d, valid accuracy %g" % (epoch+1, step, valid_accuracy))
 
                     # save the model
@@ -77,7 +77,7 @@ def build_model(X, nlabels, keep):
                               strides=[1, 2, 2, 1], padding='SAME')
 
     # create weights and biases for the 1st conv layer
-    l1_maps = 64
+    l1_maps = 32
     l1_kernel = 3
     l1_weights = weight([l1_kernel, l1_kernel, 1, l1_maps])
     l1_biases = bias([l1_maps])
@@ -90,7 +90,7 @@ def build_model(X, nlabels, keep):
     #h_pool1 = tf.nn.dropout(h_pool1, keep)
 
     # create weights and biases for the 2nd conv layer
-    l2_maps = 128
+    l2_maps = 64
     l2_kernel = 3
     l2_weights = weight([l2_kernel, l2_kernel, l1_maps, l2_maps])
     l2_biases = bias([l2_maps])
@@ -103,7 +103,7 @@ def build_model(X, nlabels, keep):
     #h_pool2 = tf.nn.dropout(h_pool2, keep)
 
     # create weights and biases for the 2nd conv layer
-    l3_maps = 256
+    l3_maps = 128
     l3_kernel = 3
     l3_weights = weight([l3_kernel, l3_kernel, l2_maps, l3_maps])
     l3_biases = bias([l3_maps])
@@ -116,7 +116,7 @@ def build_model(X, nlabels, keep):
     #h_pool3 = tf.nn.dropout(h_pool3, keep)
 
     # create weights and biases for the 3rd hidden layer
-    hidden_num = 1024
+    hidden_num = 512
     dim = h_pool3.get_shape().as_list()
     l4_weights = weight([dim[1]*dim[2]*dim[3], hidden_num])
     l4_biases = bias([hidden_num])
