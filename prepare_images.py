@@ -54,4 +54,4 @@ Resolution of each image will be (size+margin, size+margin). """.format(IMG_SIZE
         print '{}: {} images read and resized to {} in {:.3f}s. Saving...'.format(
             path, len(data), data[0].shape, end-start)
 
-        utils.save_pickle(data, d, outputdir)
+        utils.save_pickle(data, d + '.pickle', outputdir)
