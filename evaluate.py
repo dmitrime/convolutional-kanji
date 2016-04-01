@@ -44,6 +44,10 @@ Predict the Chinese character for the given images."""
     images = sys.argv[1:]
     data = np.ndarray(shape=(len(images), size, size, 1))
     for idx, img in enumerate(images):
+        if not os.path.exists(img):
+            print 'File {} not found!'.format(img)
+            sys.exit(1)
+
         data[idx, :, :, 0] = utils.add_margins(
             utils.read_resize_image(img, img_size), margin_size) - mean_image
 
@@ -61,7 +65,7 @@ Predict the Chinese character for the given images."""
     saver = tf.train.Saver()
     with tf.Session() as session:
         saver.restore(session, model)
-        print 'session loaded'
+        #print 'session loaded'
         preds = session.run(predictions, feed_dict={X: data, keep: 1.0})
         classes = np.argmax(preds, 1)
         for img, c in zip(images, classes):
