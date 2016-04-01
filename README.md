@@ -31,7 +31,7 @@ The CNN achieves an accuracy of 87% on the hold out test set.
 
 We assume that the original data is in the directory 'original' and each class is in its own separate subdirectory, e.g. 'original/character1'.
 
-First, we resize the images to 32x32px, add 4px white margin around them to get a 40x40 matrix per image, and pickle each class into `pickled40` dir:
+First, we resize the images to a given resolution (e.g. 32x32px), add white margin (e.g. 4px) around them to get a 40x40 matrix per image, and pickle each class into `pickled40` dir:
 
         python prepare_images.py original pickled40 32 4
 
