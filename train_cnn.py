@@ -3,8 +3,11 @@ import sys
 import pickle
 import tensorflow as tf
 
+import utils
+
 BATCH_SIZE = 100
 EPOCHS = 20
+MODEL_DIR = 'models'
 
 
 def train(datasets):
@@ -27,6 +30,7 @@ def train(datasets):
     # create the optimizer to minimize the loss
     optimizer = tf.train.AdamOptimizer(0.005).minimize(loss)
 
+    utils.ensure_dir(MODEL_DIR)
     saver = tf.train.Saver()
     with tf.Session() as session:
         correct_prediction = tf.equal(tf.argmax(predictions, 1), tf.argmax(y_, 1))
@@ -58,7 +62,7 @@ def train(datasets):
 
                     # save the model
                     saver.save(session,
-                               'models/cnn{}_e{}_s{}.tf'.format(valid[0].shape[0], epoch+1, step))
+                       os.path.join(MODEL_DIR, 'cnn{}_e{}_s{}.tf'.format(valid[0].shape[0], epoch+1, step)))
 
 
 def build_model(X, nlabels, keep):
