@@ -6,7 +6,7 @@ Convolutional Kanji
 
 ### About
 
-Convolution Neural Network that is trained to identify 100 different handwritten Chinese characters.
+Convolution Neural Network trained to identify 100 different handwritten Chinese characters. Requires TensorFlow, NumPy and SciPy to be installed (see `requirements.txt`).
 
 ### Network architecture
 
@@ -29,7 +29,7 @@ The CNN achieves an accuracy of 87% on the hold out test set.
 
 ### Dataset preparation
 
-We assume that the original data is in the directory 'original' and each class is in its own separate subdirectory, e.g. 'original/character1'.
+We assume that the original data is in the directory `original` and each class is in its own separate subdirectory, e.g. `original/character1`.
 
 First, we resize the images to a given resolution (e.g. 32x32px), add white margin (e.g. 4px) around them to get a 40x40 matrix per image, and pickle each class into `pickled40` dir:
 
