@@ -51,8 +51,9 @@ If the validation accuracy does not improve in the beginning after a few epochs,
 
 Evaluation is done using `evaluate.py`. It takes a variable number of input images in PNG format. To run the script we require the `metadata/metadata.pickle` file to read in the parameters necessary for image preprocessing as well as the TensorFlow model in `models/cnn.tf`. `metadata/labels_unicode.txt` is needed to see unicode character printed, otherwise just the class code name (e.g. B0C1) is printed.
 
-        python evaluate.py image1.png image2.png image3.png
+        python evaluate.py test/B0C1/image1.png test/B0DC/image2.png
 
 Example output:
         
-        test/B0C1/1.png > B0C1 傲
+        test/B0C1/image1.png > B0C1 傲
+        test/B0DC/image2.png > B0DC 败
