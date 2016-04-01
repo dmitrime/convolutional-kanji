@@ -24,7 +24,7 @@ Dropout with probability 0.5 was used between the fully-connected hidden layer a
 
 ### Performance
 
-The CNN achieves an accuracy of 87% on the hold out test set.
+The CNN achieves an accuracy of 90% on the hold out test set.
 
 
 ### Dataset preparation
