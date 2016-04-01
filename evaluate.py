@@ -10,6 +10,7 @@ from train_cnn import build_model, MODEL_DIR
 from prepare_datasets import METADATA_DIR, METADATA_FILE
 
 LABEL_UNICODE = 'labels_unicode.txt'
+MODEL_NAME = 'cnn40_e15_s0.tf'
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -53,9 +54,13 @@ Predict the Chinese character for the given images."""
     # make predictions
     predictions = tf.nn.softmax(build_model(X, nlabels, keep))
 
+    model = os.path.join(MODEL_DIR, MODEL_NAME)
+    if not os.path.exists(model):
+        raise Exception('Model {} does not exist!'.format(model))
+
     saver = tf.train.Saver()
     with tf.Session() as session:
-        saver.restore(session, 'models/good/cnn40_e15_s0.tf')
+        saver.restore(session, model)
         print 'session loaded'
         preds = session.run(predictions, feed_dict={X: data, keep: 1.0})
         classes = np.argmax(preds, 1)
