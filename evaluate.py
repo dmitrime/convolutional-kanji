@@ -1,11 +1,15 @@
 # -*- coding: UTF-8 -*-
+import os
 import sys
 import pickle
 import numpy as np
 import tensorflow as tf
 
 import utils
-from train_cnn import build_model
+from train_cnn import build_model, MODEL_DIR
+from prepare_datasets import METADATA_DIR, METADATA_FILE
+
+LABEL_UNICODE = 'labels_unicode.txt'
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -14,22 +18,27 @@ if __name__ == '__main__':
 Predict the Chinese character for the given images."""
         sys.exit(1)
 
-    # TODO
-    # read in default params for size and marging
-    img_size = 32
-    margin_size = 4
+    # read in params for label map, mean image and sizes
+    mf = os.path.join(METADATA_DIR, METADATA_FILE)
+    if os.path.exists(mf):
+        with open(mf, 'rb') as f:
+            meta = pickle.load(f)
+            label_map = meta['label_map']
+            mean_image = meta['mean_image']
+            img_size = meta['image_size']
+            margin_size = meta['margin_size']
+    else:
+        raise Exception('metadata file {} does not exist!'.format(meta))
+
     size = img_size + margin_size*2
-
-    with open('meta.pickle', 'rb') as f:
-        meta = pickle.load(f)
-    label_map = meta['label_map']
     nlabels = len(label_map)
-    mean_image = meta['mean_image']
 
-    with open('original/labels_unicode.txt', 'r') as f:
-        labels_unicode = {k: v for k,v in [line.strip().split() for line in f]}
-    # prettify the above
-    # TODO
+    # read in label unicode map
+    lu = os.path.join(METADATA_DIR, LABEL_UNICODE)
+    labels_unicode = dict()
+    if os.path.exists(lu):
+        with open(lu, 'r') as f:
+            labels_unicode = {k: v for k,v in [line.strip().split() for line in f]}
 
     images = sys.argv[1:]
     data = np.ndarray(shape=(len(images), size, size, 1))
@@ -51,4 +60,4 @@ Predict the Chinese character for the given images."""
         preds = session.run(predictions, feed_dict={X: data, keep: 1.0})
         classes = np.argmax(preds, 1)
         for img, c in zip(images, classes):
-            print '{} > {} {}'.format(img, label_map[c], labels_unicode.get(label_map[c]))
+            print '{} > {} {}'.format(img, label_map[c], labels_unicode.get(label_map[c], ''))
