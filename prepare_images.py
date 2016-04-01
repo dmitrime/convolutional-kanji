@@ -12,13 +12,13 @@ MARGIN_SIZE = 4
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print "Usage: python {} input-dir output-dir [size]".format(sys.argv[0])
+        print "Usage: python {} input-dir output-dir [image-size] [margin-size]".format(sys.argv[0])
         print """
 Lists images in all subdirs of the input dir,\n\
 resizes them to a square of given size (default: {}),\n\
-then pickles the resized numpy matrices, add white margins\n\
+then pickles the resized numpy matrices, add white margins (default: {})\n\
 and writes them to output dir, one pickle file per subdir, in subdir-name.pkl format.\n\
-Resolution of each image will be (size+margin, size+margin). """.format(IMG_SIZE)
+Resolution of each image will be (size+margin, size+margin). """.format(IMG_SIZE, MARGIN_SIZE)
         sys.exit(1)
 
     inputdir, outputdir = sys.argv[1], sys.argv[2]
@@ -32,6 +32,17 @@ Resolution of each image will be (size+margin, size+margin). """.format(IMG_SIZE
             IMG_SIZE = n
         except ValueError:
             print 'size must be an integer!'
+            sys.exit(1)
+
+    if len(sys.argv) == 5:
+        try:
+            n = int(sys.argv[4])
+            if n > 8 or n < 0:
+                print 'margin size must be between 0 and 8!'
+                sys.exit(1)
+            MARGIN_SIZE = n
+        except ValueError:
+            print 'margin size must be an integer!'
             sys.exit(1)
 
     utils.ensure_ouputdir(outputdir)
@@ -54,4 +65,7 @@ Resolution of each image will be (size+margin, size+margin). """.format(IMG_SIZE
         print '{}: {} images read and resized to {} in {:.3f}s. Saving...'.format(
             path, len(data), data[0].shape, end-start)
 
-        utils.save_pickle(data, d + '.pickle', outputdir)
+        utils.save_pickle({'data': data,
+                           'image_size': IMG_SIZE,
+                           'margin_size': MARGIN_SIZE},
+                          d + '.pickle', outputdir)
