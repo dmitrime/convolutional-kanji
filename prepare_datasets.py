@@ -4,10 +4,15 @@ import os
 import pickle
 import numpy as np
 
+import utils
+
 # Validation and Test set fraction out of total number of examples.
-VALID_PER_CLASS = 20
-TEST_PER_CLASS = 20
+VALID_PER_CLASS = 10
+TEST_PER_CLASS = 10
 RANDOM_SEED = 807
+
+METADATA_DIR = 'metadata'
+METADATA_FILE = 'metadata.pickle'
 
 
 def reshape(data, lbl, nlabels):
@@ -59,11 +64,15 @@ If nclasses param is given, limit the dataset to N classes."""
     train, valid, test = [], [], []
     train_lbl, valid_lbl, test_lbl = [], [], []
     label_map = dict()
+    image_size, margin_size = 0, 0
     for label, pkl in enumerate(pkls):
         label_map[label] = os.path.splitext(pkl)[0]
         path = os.path.join(inputdir, pkl)
         with open(path, 'rb') as f:
-            class_data = pickle.load(f)
+            data = pickle.load(f)
+            class_data = data['data']
+            image_size = data['image_size']
+            margin_size = data['margin_size']
             # shuffle the class data
             np.random.shuffle(class_data)
             nexamples = len(class_data)
@@ -108,17 +117,27 @@ If nclasses param is given, limit the dataset to N classes."""
         'valid_lbl': valid_lbl,
         'test': test,
         'test_lbl': test_lbl,
-        'label_map': label_map
     }
 
-    try:
-        with open(outfile, 'wb') as f:
-            pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
-    except:
-        print 'Failed to write pickled datasets...'
+    utils.save_pickle(data, outfile)
 
     print
     print 'Train: {}'.format(len(train))
     print 'Valid: {}'.format(len(valid))
     print 'Test: {}'.format(len(test))
     print 'Classes: {}'.format(len(label_map))
+    print
+    print 'Dataset written to {}'.format(outfile)
+
+    # save label map, mean image and sizes
+    meta = {
+        'label_map': label_map,
+        'mean_image': mean_image,
+        'image_size': image_size,
+        'margin_size': margin_size
+    }
+    utils.ensure_dir(METADATA_DIR)
+    fm = os.path.join(METADATA_DIR, METADATA_FILE)
+    utils.save_pickle(meta, fm)
+
+    print 'Metadata written to {}'.format(fm)
