@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import os
 import sys
 import pickle
 import tensorflow as tf
