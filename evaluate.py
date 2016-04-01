@@ -10,7 +10,7 @@ from train_cnn import build_model, MODEL_DIR
 from prepare_datasets import METADATA_DIR, METADATA_FILE
 
 LABEL_UNICODE = 'labels_unicode.txt'
-MODEL_NAME = 'cnn40_e15_s0.tf'
+MODEL_NAME = 'cnn.tf'
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
