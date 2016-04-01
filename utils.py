@@ -29,7 +29,7 @@ def read_resize_image(img, img_size):
         print 'File {} not readable, skipping.'.format(img)
 
 
-def ensure_ouputdir(od):
+def ensure_dir(od):
     """ Create the output dir if it does not already exist. """
     if not os.path.isdir(od):
         os.mkdir(od)

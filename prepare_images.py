@@ -45,7 +45,7 @@ Resolution of each image will be (size+margin, size+margin). """.format(IMG_SIZE
             print 'margin size must be an integer!'
             sys.exit(1)
 
-    utils.ensure_ouputdir(outputdir)
+    utils.ensure_dir(outputdir)
 
     for d in os.listdir(inputdir):
         path = os.path.join(inputdir, d)
