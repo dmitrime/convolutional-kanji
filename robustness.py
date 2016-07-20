@@ -63,28 +63,28 @@ if __name__ == '__main__':
     if not os.path.exists(model):
         raise Exception('Model {} does not exist!'.format(model))
 
-    #res = []
-    #saver = tf.train.Saver()
-    #with tf.Session() as session:
-        #saver.restore(session, model)
-        #test_accuracy = accuracy.eval(feed_dict={y_: d['test_lbl'], X: d['test'], keep: 1.0})
-        #print 'Test: {}'.format(test_accuracy)
-        #res.append(test_accuracy)
+    res = []
+    saver = tf.train.Saver()
+    with tf.Session() as session:
+        saver.restore(session, model)
+        test_accuracy = accuracy.eval(feed_dict={y_: d['test_lbl'], X: d['test'], keep: 1.0})
+        print 'Test: {}'.format(test_accuracy)
+        res.append(test_accuracy)
 
-    #for ran in np.arange(1.0, 21.0, 1.0):
-        #tset = np.ndarray(shape=(1000, 40, 40, 1))
-        #for i in range(len(d['test'])):
-            #tset[i] = d['test'][i] + gauss(ran)
+    for ran in np.arange(1.0, 21.0, 1.0):
+        tset = np.ndarray(shape=(1000, 40, 40, 1))
+        for i in range(len(d['test'])):
+            tset[i] = d['test'][i] + gauss(ran)
 
-        #with tf.Session() as session:
-            #saver.restore(session, model)
-            #test_accuracy = accuracy.eval(feed_dict={y_: d['test_lbl'], X: tset, keep: 1.0})
-            #print 'Test: {}'.format(test_accuracy)
-            #res.append(test_accuracy)
+        with tf.Session() as session:
+            saver.restore(session, model)
+            test_accuracy = accuracy.eval(feed_dict={y_: d['test_lbl'], X: tset, keep: 1.0})
+            print 'Test: {}'.format(test_accuracy)
+            res.append(test_accuracy)
 
-    #with open('robustness.in', 'w') as f:
-        #for step, acc in zip(np.arange(0.0, 21.0, 1.0), res):
-            #f.write('{} {}\n'.format(step, acc))
+    with open('robustness.in', 'w') as f:
+        for step, acc in zip(np.arange(0.0, 21.0, 1.0), res):
+            f.write('{} {}\n'.format(step, acc))
     
     xs, ys = [], []
     with open('robustness.in', 'r') as f:
