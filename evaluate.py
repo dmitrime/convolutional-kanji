@@ -10,6 +10,7 @@ from train_cnn import build_model, MODEL_DIR
 from prepare_datasets import METADATA_DIR, METADATA_FILE
 
 LABEL_UNICODE = 'labels_unicode.txt'
+#MODEL_NAME = 'good2/cnn40_e15_s0.tf'
 MODEL_NAME = 'cnn.tf'
 
 if __name__ == '__main__':
@@ -44,10 +45,6 @@ Predict the Chinese character for the given images."""
     images = sys.argv[1:]
     data = np.ndarray(shape=(len(images), size, size, 1))
     for idx, img in enumerate(images):
-        if not os.path.exists(img):
-            print 'File {} not found!'.format(img)
-            sys.exit(1)
-
         data[idx, :, :, 0] = utils.add_margins(
             utils.read_resize_image(img, img_size), margin_size) - mean_image
 
@@ -58,6 +55,13 @@ Predict the Chinese character for the given images."""
     # make predictions
     predictions = tf.nn.softmax(build_model(X, nlabels, keep))
 
+    import pickle
+    with open('d40_100.pickle', 'rb') as f:
+        d = pickle.load(f)
+    y_ = tf.placeholder(tf.float32, shape=(None, nlabels), name="y_")
+    correct_prediction = tf.equal(tf.argmax(predictions, 1), tf.argmax(y_, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
     model = os.path.join(MODEL_DIR, MODEL_NAME)
     if not os.path.exists(model):
         raise Exception('Model {} does not exist!'.format(model))
@@ -65,8 +69,11 @@ Predict the Chinese character for the given images."""
     saver = tf.train.Saver()
     with tf.Session() as session:
         saver.restore(session, model)
-        #print 'session loaded'
+        print 'session loaded'
         preds = session.run(predictions, feed_dict={X: data, keep: 1.0})
         classes = np.argmax(preds, 1)
         for img, c in zip(images, classes):
             print '{} > {} {}'.format(img, label_map[c], labels_unicode.get(label_map[c], ''))
+
+        test_accuracy = accuracy.eval(feed_dict={y_: d['test_lbl'], X: d['test'], keep: 1.0})
+        print 'Test: {}'.format(test_accuracy)
