@@ -76,6 +76,20 @@ Predict the Chinese character for the given images."""
             print '{} > {} {}'.format(img, label_map[c], labels_unicode.get(label_map[c], ''))
 
 
-        #test_accuracy = accuracy.eval(feed_dict={y_: d['test_lbl'], X: d['test'], keep: 1.0})
+        #feed_dict={y_: d['test_lbl'], X: d['test'], keep: 1.0}
+        #test_accuracy = accuracy.eval(feed_dict=feed_dict)
+        #is_correct = correct_prediction.eval(feed_dict=feed_dict)
+        #misclassified_idxs = np.arange(len(d['test']))[~is_correct]
+
+        #print 'Number of misclassified examples:', len(misclassified_idxs)
+
+        #from collections import Counter
+        #c = Counter()
+        #for idx in misclassified_idxs:
+            #val = d['test_lbl'][idx].nonzero()[0][0]
+            #c[label_map[val]] += 1
+        #for k, v in sorted(c.items(), reverse=True, key=lambda x: x[1]):
+            #print k, v
+
         #print
         #print 'Full test set: {:.2f}% accuracy'.format(test_accuracy*100.0)
